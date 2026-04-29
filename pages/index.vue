@@ -5,7 +5,11 @@ useHead({ title: () => cfg.value?.schoolName || '招生报名' })
 
 <template>
   <div class="home">
-    <div class="header">
+    <!-- 有 banner 图片时只显示图片，无图片时回退到原 logo+学校名样式 -->
+    <div v-if="cfg?.bannerImage" class="banner">
+      <img :src="cfg.bannerImage" alt="" />
+    </div>
+    <div v-else class="header">
       <div class="header-bg" />
       <div class="header-content">
         <div class="logo">
@@ -47,6 +51,8 @@ useHead({ title: () => cfg.value?.schoolName || '招生报名' })
 
 <style scoped>
 .home { padding-bottom: 40px; min-height: 100vh; background: #fff; }
+.banner { width: 100%; background: #1d4f8b; }
+.banner img { display: block; width: 100%; height: auto; }
 .header {
   position: relative;
   padding: 28px 20px 32px;

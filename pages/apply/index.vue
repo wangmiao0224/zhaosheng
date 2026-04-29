@@ -114,7 +114,11 @@ async function submit() {
   <div class="apply">
     <div class="brand-bar">{{ cfg?.schoolName || '报名' }}</div>
 
-    <div class="banner">
+    <!-- 有 banner 图就只显示图片；否则回退到默认渐变 + 文字 -->
+    <div v-if="cfg?.bannerImage" class="banner-img">
+      <img :src="cfg.bannerImage" alt="" />
+    </div>
+    <div v-else class="banner">
       <div class="banner-mask">
         <div class="banner-title">{{ cfg?.schoolName }}报名系统</div>
       </div>
@@ -302,6 +306,8 @@ async function submit() {
 
 <style scoped>
 .apply { min-height: 100vh; background: var(--bg); padding-bottom: 32px; }
+.banner-img { margin: 12px; border-radius: 14px; overflow: hidden; background: #1d4f8b; }
+.banner-img img { display: block; width: 100%; height: auto; }
 .banner {
   margin: 12px; height: 130px; border-radius: 14px;
   background-image: linear-gradient(135deg, rgba(29,79,139,0.7), rgba(46,108,182,0.7)),

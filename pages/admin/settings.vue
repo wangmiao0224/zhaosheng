@@ -9,6 +9,7 @@ const { data: cfg, refresh } = useLazyFetch('/api/admin/config', { server: false
 
 const form = reactive({
   schoolName: '', collegeName: '', officePhone: '', mobilePhone: '', primaryColor: '#1d4f8b',
+  bannerImage: '' as string | null,
   homeEntries: [] as any[]
 })
 
@@ -20,6 +21,7 @@ watch(cfg, (v) => {
     officePhone: v.officePhone,
     mobilePhone: v.mobilePhone,
     primaryColor: v.primaryColor,
+    bannerImage: v.bannerImage || '',
     homeEntries: Array.isArray(v.homeEntries) ? JSON.parse(JSON.stringify(v.homeEntries)) : []
   })
 }, { immediate: true })
@@ -69,6 +71,35 @@ async function onFileChange(e: Event) {
   uploading.value = false
   if (fileInput.value) fileInput.value.value = ''
 }
+
+// ===== 顶部 Banner 图片上传 =====
+const bannerUploading = ref(false)
+const bannerInput = ref<HTMLInputElement | null>(null)
+function pickBanner() { bannerInput.value?.click() }
+async function onBannerChange(e: Event) {
+  const f = (e.target as HTMLInputElement).files?.[0]
+  if (!f) return
+  if (!/\.(png|jpe?g|webp|gif)$/i.test(f.name)) return ElMessage.warning('仅支持 png/jpg/webp/gif')
+  if (f.size > 5 * 1024 * 1024) return ElMessage.warning('图片过大（最大 5MB）')
+  bannerUploading.value = true
+  const { data: r, error } = await apiCall<any>(
+    () => {
+      const fd = new FormData()
+      fd.append('file', f)
+      return $fetch('/api/admin/banner', { method: 'POST', body: fd })
+    },
+    { successMsg: '上传成功', errorFallback: '上传失败' }
+  )
+  if (!error && r?.url) {
+    form.bannerImage = r.url
+    refresh()
+  }
+  bannerUploading.value = false
+  if (bannerInput.value) bannerInput.value.value = ''
+}
+function clearBanner() {
+  form.bannerImage = ''
+}
 </script>
 
 <template>
@@ -106,6 +137,23 @@ async function onFileChange(e: Event) {
       </div>
     </div>
 
+    <div class="card-block banner-block">
+      <h3>首页顶部图片（Banner）</h3>
+      <p class="muted">上传后会替换首页顶部的"学校名称 / 学院名称 / 头像圆圈"区域。建议尺寸 750×420 或更宽，文件 ≤ 5MB。</p>
+      <div class="banner-preview" v-if="form.bannerImage">
+        <img :src="form.bannerImage" alt="banner" />
+      </div>
+      <div v-else class="banner-empty">尚未上传，将使用默认顶部样式</div>
+      <input ref="bannerInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden @change="onBannerChange" />
+      <div class="banner-actions">
+        <el-button type="primary" :loading="bannerUploading" @click="pickBanner">
+          {{ bannerUploading ? '上传中…' : (form.bannerImage ? '更换图片' : '上传图片') }}
+        </el-button>
+        <el-button v-if="form.bannerImage" @click="clearBanner">移除图片</el-button>
+      </div>
+      <p class="muted">提示：移除后需点击右上角【保存全部】才会生效。</p>
+    </div>
+
     <div class="card-block">
       <h3>首页入口卡片</h3>
       <table class="entries-table">
@@ -141,4 +189,9 @@ async function onFileChange(e: Event) {
 .entries-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 .entries-table th, .entries-table td { padding: 8px 6px; border-bottom: 1px solid #f1f5f9; text-align: left; }
 .entries-table th { color: #6b7280; font-weight: 500; }
+.banner-block { margin-bottom: 16px; }
+.banner-preview { margin: 10px 0 14px; border-radius: 10px; overflow: hidden; background: #f1f5f9; }
+.banner-preview img { display: block; width: 100%; max-height: 280px; object-fit: cover; }
+.banner-empty { margin: 10px 0 14px; padding: 28px; text-align: center; color: #94a3b8; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; }
+.banner-actions { display: flex; gap: 10px; }
 </style>

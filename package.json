@@ -5,12 +5,14 @@
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
+    "build:lowmem": "NODE_OPTIONS=--max-old-space-size=1024 nuxt build",
     "start": "node -r dotenv/config .output/server/index.mjs",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare && prisma generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "seed": "node --experimental-strip-types prisma/seed.ts"
+    "seed": "node --experimental-strip-types prisma/seed.ts",
+    "seed:demo": "node --experimental-strip-types prisma/seed-demo.ts"
   },
   "dependencies": {
     "@pinia/nuxt": "^0.5.5",
