@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const data: any = {}
-  const fields = ['schoolName', 'collegeName', 'officePhone', 'mobilePhone', 'primaryColor', 'bannerImage', 'logoImage', 'homeEntries']
+  const fields = ['schoolName', 'collegeName', 'officePhone', 'mobilePhone', 'primaryColor', 'bannerImage', 'logoImage', 'faviconImage', 'siteDescription', 'homeEntries']
   for (const f of fields) {
     if (body[f] !== undefined) data[f] = body[f]
   }

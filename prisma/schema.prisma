@@ -30,6 +30,8 @@ model SiteConfig {
   primaryColor    String   @default("#1d4f8b")
   bannerImage     String?
   logoImage       String?
+  faviconImage    String?
+  siteDescription String?  @db.Text
   brochurePdf     String?
   brochurePages   Int      @default(0)
   brochureVersion Int      @default(0)

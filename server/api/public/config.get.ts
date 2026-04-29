@@ -9,6 +9,8 @@ export default defineEventHandler(async () => {
       primaryColor: '#1d4f8b',
       bannerImage: null,
       logoImage: null,
+      faviconImage: null,
+      siteDescription: null,
       brochurePages: 0,
       brochureVersion: 0,
       homeEntries: []
@@ -22,6 +24,8 @@ export default defineEventHandler(async () => {
     primaryColor: c.primaryColor,
     bannerImage: c.bannerImage,
     logoImage: c.logoImage,
+    faviconImage: c.faviconImage,
+    siteDescription: c.siteDescription,
     brochurePages: c.brochurePages,
     brochureVersion: c.brochureVersion,
     homeEntries: c.homeEntries

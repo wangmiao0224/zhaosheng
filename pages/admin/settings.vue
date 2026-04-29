@@ -10,6 +10,8 @@ const { data: cfg, refresh } = useLazyFetch('/api/admin/config', { server: false
 const form = reactive({
   schoolName: '', collegeName: '', officePhone: '', mobilePhone: '', primaryColor: '#1d4f8b',
   bannerImage: '' as string | null,
+  faviconImage: '' as string | null,
+  siteDescription: '' as string | null,
   homeEntries: [] as any[]
 })
 
@@ -22,6 +24,8 @@ watch(cfg, (v) => {
     mobilePhone: v.mobilePhone,
     primaryColor: v.primaryColor,
     bannerImage: v.bannerImage || '',
+    faviconImage: v.faviconImage || '',
+    siteDescription: v.siteDescription || '',
     homeEntries: Array.isArray(v.homeEntries) ? JSON.parse(JSON.stringify(v.homeEntries)) : []
   })
 }, { immediate: true })
@@ -100,6 +104,35 @@ async function onBannerChange(e: Event) {
 function clearBanner() {
   form.bannerImage = ''
 }
+
+// ===== 网站图标 (favicon) 上传 =====
+const faviconUploading = ref(false)
+const faviconInput = ref<HTMLInputElement | null>(null)
+function pickFavicon() { faviconInput.value?.click() }
+async function onFaviconChange(e: Event) {
+  const f = (e.target as HTMLInputElement).files?.[0]
+  if (!f) return
+  if (!/\.(ico|png|jpe?g|svg|webp)$/i.test(f.name)) return ElMessage.warning('仅支持 ico/png/jpg/svg/webp')
+  if (f.size > 1 * 1024 * 1024) return ElMessage.warning('图标过大（最大 1MB）')
+  faviconUploading.value = true
+  const { data: r, error } = await apiCall<any>(
+    () => {
+      const fd = new FormData()
+      fd.append('file', f)
+      return $fetch('/api/admin/favicon', { method: 'POST', body: fd })
+    },
+    { successMsg: '上传成功', errorFallback: '上传失败' }
+  )
+  if (!error && r?.url) {
+    form.faviconImage = r.url
+    refresh()
+  }
+  faviconUploading.value = false
+  if (faviconInput.value) faviconInput.value.value = ''
+}
+function clearFavicon() {
+  form.faviconImage = ''
+}
 </script>
 
 <template>
@@ -118,6 +151,16 @@ function clearBanner() {
           <el-form-item label="办公电话"><el-input v-model="form.officePhone" /></el-form-item>
           <el-form-item label="手机联系"><el-input v-model="form.mobilePhone" /></el-form-item>
           <el-form-item label="主题色"><el-color-picker v-model="form.primaryColor" /></el-form-item>
+          <el-form-item label="网站描述">
+            <el-input
+              v-model="form.siteDescription"
+              type="textarea"
+              :rows="2"
+              maxlength="200"
+              show-word-limit
+              placeholder="用于浏览器和分享卡片的描述（≤200 字）"
+            />
+          </el-form-item>
         </el-form>
       </div>
 
@@ -154,6 +197,25 @@ function clearBanner() {
       <p class="muted">提示：移除后需点击右上角【保存全部】才会生效。</p>
     </div>
 
+    <div class="card-block favicon-block">
+      <h3>网站图标 (Favicon)</h3>
+      <p class="muted">显示在浏览器标签页、收藏夹、以及部分分享场景。建议使用 32×32 或 64×64 的 .ico / .png，文件 ≤ 1MB。</p>
+      <div class="favicon-row">
+        <div class="favicon-preview" v-if="form.faviconImage">
+          <img :src="form.faviconImage" alt="favicon" />
+        </div>
+        <div v-else class="favicon-empty">未上传</div>
+        <input ref="faviconInput" type="file" accept=".ico,image/x-icon,image/png,image/jpeg,image/svg+xml,image/webp" hidden @change="onFaviconChange" />
+        <div class="favicon-actions">
+          <el-button type="primary" :loading="faviconUploading" @click="pickFavicon">
+            {{ faviconUploading ? '上传中…' : (form.faviconImage ? '更换图标' : '上传图标') }}
+          </el-button>
+          <el-button v-if="form.faviconImage" @click="clearFavicon">移除</el-button>
+        </div>
+      </div>
+      <p class="muted">提示：分享给微信/QQ/浏览器时显示的缩略图来自上方"首页 Banner"，标题与描述来自基础信息。修改后请点击【保存全部】。</p>
+    </div>
+
     <div class="card-block">
       <h3>首页入口卡片</h3>
       <table class="entries-table">
@@ -175,6 +237,12 @@ function clearBanner() {
       <el-button @click="addEntry" style="margin-top:10px">+ 新增入口</el-button>
     </div>
   </div>
+.favicon-block { margin-bottom: 16px; }
+.favicon-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 10px 0 6px; }
+.favicon-preview { width: 64px; height: 64px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.favicon-preview img { max-width: 100%; max-height: 100%; }
+.favicon-empty { width: 64px; height: 64px; border-radius: 10px; background: #f8fafc; border: 1px dashed #cbd5e1; color: #94a3b8; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+.favicon-actions { display: flex; gap: 10px; }
 </template>
 
 <style scoped>
