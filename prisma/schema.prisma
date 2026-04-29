@@ -1,0 +1,109 @@
+generator client {
+  provider      = "prisma-client-js"
+  // native = 本机（Mac 开发）
+  // debian-openssl-3.0.x = Ubuntu 22.04+/Debian 12
+  // debian-openssl-1.1.x = Ubuntu 20.04
+  // rhel-openssl-3.0.x   = CentOS Stream 9 / RHEL 9 / Rocky 9
+  // rhel-openssl-1.0.x   = CentOS 7
+  // linux-musl-openssl-3.0.x = Alpine (Docker)
+  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x", "rhel-openssl-3.0.x", "rhel-openssl-1.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model SiteConfig {
+  id              Int      @id @default(1)
+  schoolName      String   @default("桂林电子科技大学应用职业本科")
+  collegeName     String   @default("继续教育学院")
+  officePhone     String   @default("0773-7594653")
+  mobilePhone     String   @default("18807730053")
+  primaryColor    String   @default("#1d4f8b")
+  bannerImage     String?
+  logoImage       String?
+  brochurePdf     String?
+  brochurePages   Int      @default(0)
+  brochureVersion Int      @default(0)
+  homeEntries     Json     @default("[]")
+  updatedAt       DateTime @updatedAt
+}
+
+model Major {
+  id      Int     @id @default(autoincrement())
+  name    String
+  code    String?
+  enabled Boolean @default(true)
+  sort    Int     @default(0)
+  remark  String?
+
+  applicationsAsFirst  Application[] @relation("major1")
+  applicationsAsSecond Application[] @relation("major2")
+}
+
+model TestSlot {
+  id       Int      @id @default(autoincrement())
+  label    String
+  startAt  DateTime
+  endAt    DateTime
+  capacity Int      @default(0)
+  enabled  Boolean  @default(true)
+
+  applications Application[]
+}
+
+model Application {
+  id             Int      @id @default(autoincrement())
+  gaokaoNo       String?
+  name           String
+  idCard         String   @unique
+  gender         String
+  phone          String
+  ethnicity      String
+  hometown       String
+  graduateSchool String
+  major1Id       Int
+  major2Id       Int?
+  testSlotId     Int?
+  awards         String?  @db.Text
+  address        String
+  status         String   @default("pending")
+  remark         String?  @db.Text
+  ip             String?
+  extraData      Json?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  major1   Major     @relation("major1", fields: [major1Id], references: [id])
+  major2   Major?    @relation("major2", fields: [major2Id], references: [id])
+  testSlot TestSlot? @relation(fields: [testSlotId], references: [id])
+
+  @@index([createdAt])
+  @@index([status])
+}
+
+// 表单字段配置：核心字段 (isCore=true) 和管理员新增的扩展字段 (isCore=false)
+model FormFieldConfig {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique     // 字段在 Application 上的属性名（核心）或 extraData 的 key（扩展）
+  label       String                // 显示名
+  type        String                // text|textarea|number|date|radio|checkbox|select|gender|major|major2|slot
+  required    Boolean  @default(false)
+  enabled     Boolean  @default(true)
+  isCore      Boolean  @default(false)
+  sort        Int      @default(0)
+  placeholder String?
+  options     Json?    // [{label, value}] for radio/select/checkbox
+  rule        String?  // 备用：正则
+  helpText    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
