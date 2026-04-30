@@ -108,6 +108,12 @@ function addOption() {
 function removeOption(idx: number) {
   newField.value.options.splice(idx, 1)
 }
+// 输入「选项名」时自动同步到「存储值」（用户基本不需要单独填）
+function onOptionLabelInput(idx: number, val: string) {
+  const opt = newField.value.options[idx]
+  opt.label = val
+  opt.value = val
+}
 async function submitCreate() {
   const f = newField.value
   if (!f.key || !f.label) {
@@ -120,7 +126,10 @@ async function submitCreate() {
     placeholder: f.placeholder, helpText: f.helpText
   }
   if (HAS_OPTIONS.includes(f.type)) {
-    body.options = f.options.filter(o => o.label && o.value)
+    // value 留空时回退用 label，避免用户漏填
+    body.options = f.options
+      .map(o => ({ label: (o.label || '').trim(), value: (o.value || o.label || '').trim() }))
+      .filter(o => o.label)
     if (body.options.length === 0) {
       const { ElMessage } = await import('element-plus')
       ElMessage.warning('请至少填写一个选项'); return
@@ -276,11 +285,15 @@ onBeforeUnmount(() => {
         <el-form-item v-if="HAS_OPTIONS.includes(newField.type)" label="选项">
           <div style="width: 100%">
             <div v-for="(opt, i) in newField.options" :key="i" class="opt-row">
-              <el-input v-model="opt.label" placeholder="显示名" size="small" style="flex:1" />
-              <el-input v-model="opt.value" placeholder="存储值" size="small" style="flex:1" />
+              <el-input
+                :model-value="opt.label"
+                @update:model-value="(v: string) => onOptionLabelInput(i, v)"
+                :placeholder="`选项 ${i + 1}，例如：是 / 否`"
+                size="small" style="flex:1" />
               <el-button size="small" :disabled="newField.options.length <= 1" @click="removeOption(i)">删</el-button>
             </div>
             <el-button size="small" @click="addOption">+ 添加选项</el-button>
+            <div class="form-tip">用户在表单上看到、提交后保存到数据库的都是这个文本</div>
           </div>
         </el-form-item>
       </el-form>

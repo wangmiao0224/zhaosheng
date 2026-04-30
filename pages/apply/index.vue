@@ -8,7 +8,27 @@ const { data: majors } = await useFetch('/api/public/majors')
 const { data: slots } = await useFetch('/api/public/slots')
 const { data: fieldsCfg } = await useFetch<any[]>('/api/public/form-config')
 
-useHead({ title: () => (cfg.value?.schoolName || '招生') + ' · 报名' })
+// 浏览器标签 + 分享卡片（微信/QQ 等聊天里贴链接显示的标题/描述/缩略图）
+// 注：缩略图使用 plugins/site-head.ts 注入的全局 banner 图，这里只覆盖标题与描述
+const shareTitle = computed(() => {
+  const s = cfg.value?.schoolName || '招生'
+  const c = cfg.value?.collegeName ? ' · ' + cfg.value.collegeName : ''
+  return `${s}${c} 在线报名`
+})
+const shareDesc = computed(() => {
+  return cfg.value?.siteDescription
+    || `${cfg.value?.schoolName || ''} 在线报名通道，点击进入填写报名信息。`
+})
+useHead({
+  title: () => shareTitle.value,
+  meta: [
+    { name: 'description', content: () => shareDesc.value },
+    { property: 'og:title', content: () => shareTitle.value },
+    { property: 'og:description', content: () => shareDesc.value },
+    { name: 'twitter:title', content: () => shareTitle.value },
+    { name: 'twitter:description', content: () => shareDesc.value },
+  ]
+})
 
 function cf(key: string) {
   const f = fieldsCfg.value?.find(x => x.key === key)
@@ -239,9 +259,10 @@ async function submit() {
             :rules="f.required ? [{ required: true }] : []" />
 
           <van-field v-else-if="f.type === 'radio'"
-            :name="f.key" :label="f.label" :required="f.required">
+            :name="f.key" :label="f.label" :required="f.required"
+            :label-align="(f.options?.length || 0) >= 4 ? 'top' : undefined">
             <template #input>
-              <van-radio-group v-model="extraData[f.key]" direction="horizontal">
+              <van-radio-group v-model="extraData[f.key]" direction="horizontal" class="wrap-radio">
                 <van-radio v-for="o in f.options" :key="o.value" :name="o.value" icon-size="18px">
                   {{ o.label }}
                 </van-radio>
@@ -324,3 +345,5 @@ async function submit() {
 :deep(.van-radio-group--horizontal) { gap: 24px; }
 :deep(.van-checkbox-group--horizontal) { gap: 18px; }
 </style>
+/* 选项较多时允许横向换行，避免挤成竖排或溢出 */
+:deep(.wrap-radio) { display: flex; flex-wrap: wrap; row-gap: 10px; column-gap: 24px; width: 100%; }
