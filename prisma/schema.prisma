@@ -32,6 +32,9 @@ model SiteConfig {
   logoImage       String?
   faviconImage    String?
   siteDescription String?  @db.Text
+  shareTitle       String?
+  shareDescription String?  @db.Text
+  shareImage       String?
   brochurePdf     String?
   brochurePages   Int      @default(0)
   brochureVersion Int      @default(0)

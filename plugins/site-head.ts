@@ -22,10 +22,16 @@ export default defineNuxtPlugin(async () => {
   }
 
   const favicon = toAbs(c.faviconImage)
-  const ogImage = toAbs(c.bannerImage)
+  // 分享卡片图标：优先 shareImage，否则回落到 bannerImage
+  const ogImage = toAbs(c.shareImage || c.bannerImage)
 
-  const title = [c.schoolName, c.collegeName].filter(Boolean).join(' · ') + ' 报名'
+  // 分享标题：优先单独配置的 shareTitle，否则用学校 · 学院 报名
+  const title =
+    c.shareTitle ||
+    ([c.schoolName, c.collegeName].filter(Boolean).join(' · ') + ' 报名')
+  // 分享描述：优先 shareDescription，其次 siteDescription，最后兜底
   const desc =
+    c.shareDescription ||
     c.siteDescription ||
     `${c.schoolName || ''}${c.collegeName ? ' ' + c.collegeName : ''} 在线报名系统`
 

@@ -12,6 +12,9 @@ const form = reactive({
   bannerImage: '' as string | null,
   faviconImage: '' as string | null,
   siteDescription: '' as string | null,
+  shareTitle: '' as string | null,
+  shareDescription: '' as string | null,
+  shareImage: '' as string | null,
   homeEntries: [] as any[]
 })
 
@@ -26,6 +29,9 @@ watch(cfg, (v) => {
     bannerImage: v.bannerImage || '',
     faviconImage: v.faviconImage || '',
     siteDescription: v.siteDescription || '',
+    shareTitle: v.shareTitle || '',
+    shareDescription: v.shareDescription || '',
+    shareImage: v.shareImage || '',
     homeEntries: Array.isArray(v.homeEntries) ? JSON.parse(JSON.stringify(v.homeEntries)) : []
   })
 }, { immediate: true })
@@ -133,6 +139,35 @@ async function onFaviconChange(e: Event) {
 function clearFavicon() {
   form.faviconImage = ''
 }
+
+// ===== 分享卡片图标上传 =====
+const shareImgUploading = ref(false)
+const shareImgInput = ref<HTMLInputElement | null>(null)
+function pickShareImg() { shareImgInput.value?.click() }
+async function onShareImgChange(e: Event) {
+  const f = (e.target as HTMLInputElement).files?.[0]
+  if (!f) return
+  if (!/\.(png|jpe?g|webp|gif)$/i.test(f.name)) return ElMessage.warning('仅支持 png/jpg/webp/gif')
+  if (f.size > 5 * 1024 * 1024) return ElMessage.warning('图片过大（最大 5MB）')
+  shareImgUploading.value = true
+  const { data: r, error } = await apiCall<any>(
+    () => {
+      const fd = new FormData()
+      fd.append('file', f)
+      return $fetch('/api/admin/share-image', { method: 'POST', body: fd })
+    },
+    { successMsg: '上传成功', errorFallback: '上传失败' }
+  )
+  if (!error && r?.url) {
+    form.shareImage = r.url
+    refresh()
+  }
+  shareImgUploading.value = false
+  if (shareImgInput.value) shareImgInput.value.value = ''
+}
+function clearShareImg() {
+  form.shareImage = ''
+}
 </script>
 
 <template>
@@ -216,6 +251,47 @@ function clearFavicon() {
       <p class="muted">提示：分享给微信/QQ/浏览器时显示的缩略图来自上方"首页 Banner"，标题与描述来自基础信息。修改后请点击【保存全部】。</p>
     </div>
 
+    <div class="card-block share-block">
+      <h3>分享卡片（微信 / QQ / 浏览器分享预览）</h3>
+      <p class="muted">这里的字段仅影响分享出去时看到的卡片内容，不会改变页面本身。未填写时会自动使用"基础信息 / 首页 Banner"作为兜底。</p>
+      <el-form label-width="100px">
+        <el-form-item label="分享标题">
+          <el-input
+            v-model="form.shareTitle"
+            maxlength="60"
+            show-word-limit
+            placeholder="为空时使用：学校名称 · 学院名称 报名"
+          />
+        </el-form-item>
+        <el-form-item label="分享描述">
+          <el-input
+            v-model="form.shareDescription"
+            type="textarea"
+            :rows="3"
+            maxlength="200"
+            show-word-limit
+            placeholder="为空时回落到「网站描述」，再为空使用默认文案"
+          />
+        </el-form-item>
+        <el-form-item label="分享图标">
+          <div class="share-img-row">
+            <div class="share-img-preview" v-if="form.shareImage">
+              <img :src="form.shareImage" alt="share" />
+            </div>
+            <div v-else class="share-img-empty">未上传，将使用首页 Banner</div>
+            <input ref="shareImgInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden @change="onShareImgChange" />
+            <div class="share-img-actions">
+              <el-button type="primary" :loading="shareImgUploading" @click="pickShareImg">
+                {{ shareImgUploading ? '上传中…' : (form.shareImage ? '更换图标' : '上传图标') }}
+              </el-button>
+              <el-button v-if="form.shareImage" @click="clearShareImg">移除</el-button>
+            </div>
+          </div>
+        </el-form-item>
+      </el-form>
+      <p class="muted">建议使用 正方形或 1.91:1 的图片（如 600×600 或 1200×630），文件 ≤ 5MB。修改后请点击【保存全部】。部分微信版本会优先读网页 &lt;title&gt;，若分享标题未生效是正常现象。</p>
+    </div>
+
     <div class="card-block">
       <h3>首页入口卡片</h3>
       <table class="entries-table">
@@ -262,4 +338,10 @@ function clearFavicon() {
 .banner-preview img { display: block; width: 100%; max-height: 280px; object-fit: cover; }
 .banner-empty { margin: 10px 0 14px; padding: 28px; text-align: center; color: #94a3b8; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; }
 .banner-actions { display: flex; gap: 10px; }
+.share-block { margin-bottom: 16px; }
+.share-img-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.share-img-preview { width: 96px; height: 96px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.share-img-preview img { max-width: 100%; max-height: 100%; object-fit: cover; }
+.share-img-empty { width: 140px; height: 96px; border-radius: 12px; background: #f8fafc; border: 1px dashed #cbd5e1; color: #94a3b8; font-size: 12px; padding: 6px; display: flex; align-items: center; justify-content: center; text-align: center; }
+.share-img-actions { display: flex; gap: 10px; }
 </style>

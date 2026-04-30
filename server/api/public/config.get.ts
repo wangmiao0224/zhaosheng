@@ -11,6 +11,9 @@ export default defineEventHandler(async () => {
       logoImage: null,
       faviconImage: null,
       siteDescription: null,
+      shareTitle: null,
+      shareDescription: null,
+      shareImage: null,
       brochurePages: 0,
       brochureVersion: 0,
       homeEntries: []
@@ -26,6 +29,9 @@ export default defineEventHandler(async () => {
     logoImage: c.logoImage,
     faviconImage: c.faviconImage,
     siteDescription: c.siteDescription,
+    shareTitle: c.shareTitle,
+    shareDescription: c.shareDescription,
+    shareImage: c.shareImage,
     brochurePages: c.brochurePages,
     brochureVersion: c.brochureVersion,
     homeEntries: c.homeEntries
