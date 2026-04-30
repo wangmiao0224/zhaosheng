@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const { data: cfg } = await useFetch('/api/public/config')
-useHead({ title: () => cfg.value?.schoolName || '招生报名' })
+useHead({ title: () => (cfg.value as any)?.shareTitle || cfg.value?.schoolName || '招生报名' })
 </script>
 
 <template>

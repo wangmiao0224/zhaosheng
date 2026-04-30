@@ -9,24 +9,46 @@ const { data: slots } = await useFetch('/api/public/slots')
 const { data: fieldsCfg } = await useFetch<any[]>('/api/public/form-config')
 
 // 浏览器标签 + 分享卡片（微信/QQ 等聊天里贴链接显示的标题/描述/缩略图）
-// 注：缩略图使用 plugins/site-head.ts 注入的全局 banner 图，这里只覆盖标题与描述
+// 优先使用后台「分享卡片」单独配置（shareTitle / shareDescription / shareImage），
+// 缺省时回落到学校名称 / 网站描述 / 首页 banner。
 const shareTitle = computed(() => {
+  const cfgAny = cfg.value as any
+  if (cfgAny?.shareTitle) return cfgAny.shareTitle
   const s = cfg.value?.schoolName || '招生'
   const c = cfg.value?.collegeName ? ' · ' + cfg.value.collegeName : ''
   return `${s}${c} 在线报名`
 })
 const shareDesc = computed(() => {
-  return cfg.value?.siteDescription
+  const cfgAny = cfg.value as any
+  return cfgAny?.shareDescription
+    || cfg.value?.siteDescription
     || `${cfg.value?.schoolName || ''} 在线报名通道，点击进入填写报名信息。`
 })
+const shareImg = computed(() => {
+  const cfgAny = cfg.value as any
+  return cfgAny?.shareImage || cfg.value?.bannerImage || ''
+})
+
+// 把相对路径转成绝对 URL（社交平台抓取需要绝对地址）
+const reqUrl = useRequestURL()
+const origin = reqUrl?.origin || ''
+const absShareImg = computed(() => {
+  const p = shareImg.value
+  if (!p) return ''
+  if (/^https?:\/\//i.test(p)) return p
+  return origin + p
+})
+
 useHead({
   title: () => shareTitle.value,
   meta: [
     { name: 'description', content: () => shareDesc.value },
     { property: 'og:title', content: () => shareTitle.value },
     { property: 'og:description', content: () => shareDesc.value },
+    { property: 'og:image', content: () => absShareImg.value },
     { name: 'twitter:title', content: () => shareTitle.value },
     { name: 'twitter:description', content: () => shareDesc.value },
+    { name: 'twitter:image', content: () => absShareImg.value },
   ]
 })
 
