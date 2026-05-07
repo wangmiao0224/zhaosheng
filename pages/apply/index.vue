@@ -52,16 +52,6 @@ useHead({
   ]
 })
 
-function cf(key: string) {
-  const f = fieldsCfg.value?.find(x => x.key === key)
-  return {
-    enabled: !!f,
-    label: f?.label || key,
-    placeholder: f?.placeholder || '',
-    required: !!f?.required
-  }
-}
-
 const form = reactive({
   gaokaoNo: '',
   name: '',
@@ -78,8 +68,7 @@ const form = reactive({
   address: ''
 })
 
-const extraFields = computed(() => (fieldsCfg.value || []).filter(f => !f.isCore && f.enabled))
-const extraData = reactive<Record<string, any>>({})
+const extraFields = computed(() => (fieldsCfg.value || []).filter(f => !f.isCore && f.enabled))const extraData = reactive<Record<string, any>>({})
 watchEffect(() => {
   for (const f of extraFields.value) {
     if (!(f.key in extraData)) extraData[f.key] = f.type === 'checkbox' ? [] : ''
@@ -168,99 +157,101 @@ async function submit() {
 
     <van-form class="form" @submit="submit">
       <van-cell-group inset>
-        <van-field v-if="cf('gaokaoNo').enabled"
-          v-model="form.gaokaoNo"
-          :label="cf('gaokaoNo').label" :placeholder="cf('gaokaoNo').placeholder"
-          :required="cf('gaokaoNo').required"
-          :rules="cf('gaokaoNo').required ? [{ required: true }] : []" />
+        <!-- 所有字段统一按后台 sort 顺序渲染 -->
+        <template v-for="f in (fieldsCfg || [])" :key="f.id">
+          <!-- ===== 核心字段 ===== -->
+          <van-field v-if="f.key === 'gaokaoNo'"
+            v-model="form.gaokaoNo"
+            :label="f.label" :placeholder="f.placeholder"
+            :required="f.required"
+            :rules="f.required ? [{ required: true }] : []" />
 
-        <van-field v-if="cf('name').enabled"
-          v-model="form.name"
-          :label="cf('name').label" :placeholder="cf('name').placeholder"
-          :required="cf('name').required"
-          :rules="cf('name').required ? [{ required: true }] : []" />
+          <van-field v-else-if="f.key === 'name'"
+            v-model="form.name"
+            :label="f.label" :placeholder="f.placeholder"
+            :required="f.required"
+            :rules="f.required ? [{ required: true }] : []" />
 
-        <van-field v-if="cf('idCard').enabled"
-          v-model="form.idCard"
-          :label="cf('idCard').label" :placeholder="cf('idCard').placeholder"
-          :required="cf('idCard').required"
-          :rules="cf('idCard').required ? [{ required: true }] : []" />
+          <van-field v-else-if="f.key === 'idCard'"
+            v-model="form.idCard"
+            :label="f.label" :placeholder="f.placeholder"
+            :required="f.required"
+            :rules="f.required ? [{ required: true }] : []" />
 
-        <van-field v-if="cf('gender').enabled" name="gender"
-          :label="cf('gender').label" :required="cf('gender').required">
-          <template #input>
-            <van-radio-group v-model="form.gender" direction="horizontal">
-              <van-radio name="male" icon-size="18px">男生</van-radio>
-              <van-radio name="female" icon-size="18px">女生</van-radio>
-            </van-radio-group>
-          </template>
-        </van-field>
+          <van-field v-else-if="f.key === 'gender'" name="gender"
+            :label="f.label" :required="f.required">
+            <template #input>
+              <van-radio-group v-model="form.gender" direction="horizontal">
+                <van-radio name="male" icon-size="18px">男生</van-radio>
+                <van-radio name="female" icon-size="18px">女生</van-radio>
+              </van-radio-group>
+            </template>
+          </van-field>
 
-        <van-field v-if="cf('phone').enabled"
-          v-model="form.phone" type="tel"
-          :label="cf('phone').label" :placeholder="cf('phone').placeholder"
-          :required="cf('phone').required"
-          :rules="cf('phone').required ? [{ required: true }] : []" />
+          <van-field v-else-if="f.key === 'phone'"
+            v-model="form.phone" type="tel"
+            :label="f.label" :placeholder="f.placeholder"
+            :required="f.required"
+            :rules="f.required ? [{ required: true }] : []" />
 
-        <van-field v-if="cf('ethnicity').enabled"
-          v-model="form.ethnicity"
-          :label="cf('ethnicity').label" :placeholder="cf('ethnicity').placeholder"
-          :required="cf('ethnicity').required"
-          :rules="cf('ethnicity').required ? [{ required: true }] : []" />
+          <van-field v-else-if="f.key === 'ethnicity'"
+            v-model="form.ethnicity"
+            :label="f.label" :placeholder="f.placeholder"
+            :required="f.required"
+            :rules="f.required ? [{ required: true }] : []" />
 
-        <van-field v-if="cf('hometown').enabled"
-          v-model="form.hometown"
-          :label="cf('hometown').label" :placeholder="cf('hometown').placeholder"
-          :required="cf('hometown').required"
-          :rules="cf('hometown').required ? [{ required: true }] : []" />
+          <van-field v-else-if="f.key === 'hometown'"
+            v-model="form.hometown"
+            :label="f.label" :placeholder="f.placeholder"
+            :required="f.required"
+            :rules="f.required ? [{ required: true }] : []" />
 
-        <van-field v-if="cf('graduateSchool').enabled"
-          v-model="form.graduateSchool" input-align="right"
-          :label="cf('graduateSchool').label" :placeholder="cf('graduateSchool').placeholder"
-          :required="cf('graduateSchool').required"
-          :rules="cf('graduateSchool').required ? [{ required: true }] : []" />
+          <van-field v-else-if="f.key === 'graduateSchool'"
+            v-model="form.graduateSchool" input-align="right"
+            :label="f.label" :placeholder="f.placeholder"
+            :required="f.required"
+            :rules="f.required ? [{ required: true }] : []" />
 
-        <van-field v-if="cf('major1Id').enabled"
-          readonly clickable
-          :label="cf('major1Id').label" :required="cf('major1Id').required"
-          :model-value="major1Name"
-          :placeholder="cf('major1Id').placeholder || '请选择报读专业'"
-          input-align="right" right-icon="arrow"
-          @click="showMajor1 = true" />
+          <van-field v-else-if="f.key === 'major1Id'"
+            readonly clickable
+            :label="f.label" :required="f.required"
+            :model-value="major1Name"
+            :placeholder="f.placeholder || '请选择报读专业'"
+            input-align="right" right-icon="arrow"
+            @click="showMajor1 = true" />
 
-        <van-field v-if="cf('major2Id').enabled"
-          readonly clickable
-          :label="cf('major2Id').label" :required="cf('major2Id').required"
-          :model-value="major2Name"
-          :placeholder="cf('major2Id').placeholder || '请选择报读专业'"
-          input-align="right" right-icon="arrow"
-          @click="showMajor2 = true" />
+          <van-field v-else-if="f.key === 'major2Id'"
+            readonly clickable
+            :label="f.label" :required="f.required"
+            :model-value="major2Name"
+            :placeholder="f.placeholder || '请选择报读专业'"
+            input-align="right" right-icon="arrow"
+            @click="showMajor2 = true" />
 
-        <van-field v-if="cf('testSlotId').enabled"
-          readonly clickable
-          :label="cf('testSlotId').label" :required="cf('testSlotId').required"
-          :model-value="slotName"
-          :placeholder="cf('testSlotId').placeholder || '请选择面试或笔试时间'"
-          input-align="right" right-icon="arrow"
-          @click="showSlot = true" />
+          <van-field v-else-if="f.key === 'testSlotId'"
+            readonly clickable
+            :label="f.label" :required="f.required"
+            :model-value="slotName"
+            :placeholder="f.placeholder || '请选择面试或笔试时间'"
+            input-align="right" right-icon="arrow"
+            @click="showSlot = true" />
 
-        <van-field v-if="cf('awards').enabled"
-          v-model="form.awards"
-          :label="cf('awards').label" :placeholder="cf('awards').placeholder"
-          :required="cf('awards').required"
-          type="textarea" rows="3" autosize maxlength="500" label-align="top"
-          :rules="cf('awards').required ? [{ required: true }] : []" />
+          <van-field v-else-if="f.key === 'awards'"
+            v-model="form.awards"
+            :label="f.label" :placeholder="f.placeholder"
+            :required="f.required"
+            type="textarea" rows="3" autosize maxlength="500" label-align="top"
+            :rules="f.required ? [{ required: true }] : []" />
 
-        <van-field v-if="cf('address').enabled"
-          v-model="form.address"
-          :label="cf('address').label" :placeholder="cf('address').placeholder"
-          :required="cf('address').required"
-          type="textarea" rows="2" autosize label-align="top"
-          :rules="cf('address').required ? [{ required: true }] : []" />
+          <van-field v-else-if="f.key === 'address'"
+            v-model="form.address"
+            :label="f.label" :placeholder="f.placeholder"
+            :required="f.required"
+            type="textarea" rows="2" autosize label-align="top"
+            :rules="f.required ? [{ required: true }] : []" />
 
-        <!-- 扩展字段 -->
-        <template v-for="f in extraFields" :key="f.id">
-          <van-field v-if="f.type === 'text'"
+          <!-- ===== 扩展字段（按 type 渲染）===== -->
+          <van-field v-else-if="f.type === 'text'"
             v-model="extraData[f.key]"
             :label="f.label" :placeholder="f.placeholder" :required="f.required"
             :rules="f.required ? [{ required: true }] : []" />
